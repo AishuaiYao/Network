@@ -16,7 +16,7 @@
 using namespace std;
 
 
-const int BUF_SIZE = 255;
+const int BUF_SIZE = 1024;
 int main()
 {
 	/*+++++++++++++++++++++++++++++++++++++++++++++++
@@ -57,28 +57,45 @@ int main()
 
     listen(server_fd,30);
 
-    struct sockaddr_in client;
-    socklen_t len = sizeof(client);
     
-    char buffer[BUF_SIZE] = {};
-	int fd = accept(server_fd, (struct sockaddr*)&client, &len);
-    if (fd == -1)
+    while (1)
     {
-    	cout << "accept 错误\n" <<endl;
-    	exit(-1);
-    }
 
-    char *ip = inet_ntoa(client.sin_addr);//将网络地址转换成“.”点隔的字符串格
-
-    cout << "客户:【" << ip << "】连接成功" << endl;
-
-    write(fd,"welcome",7);
+    	struct sockaddr_in client;
+    	socklen_t len = sizeof(client);
     
-    int size = read(fd,buffer,sizeof(buffer));
+    	int fd = accept(server_fd, (struct sockaddr*)&client, &len);
+	    if (fd == -1)
+	    {
+	    	cout << "accept 错误\n" <<endl;
+	    	continue;
+	    }
 
-    cout << "接收到的字节数为：" << size << endl;
-    cout << "内容：" << buffer << "\n" << endl;
-	close(fd);
+	    while (1)
+	    {
+			
+	    	char buffer[BUF_SIZE] = {};
+
+			int ret = recv(fd,buffer,BUF_SIZE-1,0);
+			if (ret == -1)
+			{
+				cout << "recv 错误" << endl;
+				continue;
+			}
+
+
+			char *ip = inet_ntoa(client.sin_addr);//将网络地址转换成“.”点隔的字符串格
+		    cout << "client: " << buffer << endl;
+
+		    memset(buffer,0x00,BUF_SIZE);
+		    cin >> buffer;
+		    send(fd,buffer,BUF_SIZE,0);
+
+	    }
+	    
+		close(fd);	
+    }
+	
 	close(server_fd);
     	
     return 0;

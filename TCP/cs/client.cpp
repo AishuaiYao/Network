@@ -1,13 +1,18 @@
 #include <iostream>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <string>
+#include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 
+
 using namespace std;
+
+
+
+const int BUF_SIZE = 1024;
 
 int main()
 {
@@ -31,8 +36,26 @@ int main()
 		exit(-1);
 	}
 	cout << "建立连接" << endl;
-	char s[255] ={"hello server,I am client"};
-	write(client_fd,s,sizeof(s));
+	
+
+	while (1)
+	{
+
+		char buffer[BUF_SIZE] = {};
+		cin >> buffer;
+		send(client_fd,buffer,BUF_SIZE,0);
+
+		memset(buffer,0x00,BUF_SIZE);
+
+		int ret = recv(client_fd,buffer,BUF_SIZE-1,0);
+		if (ret < 0){
+			cout << "recv 错误";
+			continue;
+		}
+
+		cout << "server:" << buffer << endl;		
+	}
+	
 	close(client_fd);
 
 	return 0;
