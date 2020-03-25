@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -11,8 +12,29 @@
 using namespace std;
 
 
+#define NUM_THREAD 2
+
 
 const int BUF_SIZE = 1024;
+
+
+void *recv(void *arg)
+{
+	int fd = *((int*)arg);
+	char buffer[BUF_SIZE] = {};
+	while(1)
+	{
+		memset(buffer,0x00,BUF_SIZE);
+		int ret = recv(fd,buffer,BUF_SIZE,0);	
+		if (ret < 0)
+		{
+			cout << "找不到服务器";
+			break;
+		}	
+		cout << "server:" << buffer << endl; 
+	}
+	close(fd);
+}
 
 int main()
 {
@@ -38,26 +60,23 @@ int main()
 	cout << "建立连接" << endl;
 	
 
+	pthread_t tids[NUM_THREAD];
+	int ret = pthread_create(&tids[0],NULL,recv,(void *)&client_fd);
+	if (ret != 0)
+    {
+    	cout << "接收线程创建失败" << endl;
+    }
+
+
 	while (1)
 	{
-
-		char buffer[BUF_SIZE] = {};
+	    char buffer[BUF_SIZE] = {};
 		cin >> buffer;
-		send(client_fd,buffer,BUF_SIZE,0);
-
-		memset(buffer,0x00,BUF_SIZE);
-
-		int ret = recv(client_fd,buffer,BUF_SIZE-1,0);
-		if (ret < 0){
-			cout << "recv 错误";
-			continue;
-		}
-
-		cout << "server:" << buffer << endl;		
+		send(client_fd,buffer,BUF_SIZE,0);	
+		// cout << "已发送" << endl;
 	}
-	
-	close(client_fd);
 
+
+	pthread_exit(NULL);
 	return 0;
-
 }

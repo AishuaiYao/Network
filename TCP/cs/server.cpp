@@ -1,4 +1,7 @@
 #include <iostream>
+#include <stdio.h>
+#include <errno.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -16,7 +19,31 @@
 using namespace std;
 
 
+#define NUM_THREADS 2
+
+
 const int BUF_SIZE = 1024;
+
+
+void *recv(void *arg)
+{
+	int fd = *((int*)arg);
+	char buffer[BUF_SIZE] = {};
+	while(1)
+	{
+		memset(buffer,0x00,BUF_SIZE);
+		int ret = recv(fd,buffer,BUF_SIZE,0);
+		if (ret == 0)
+		{
+			cout << "client has been closed" << endl;
+			break;
+		}
+		// char *ip = inet_ntoa(client.sin_addr);//将网络地址转换成“.”点隔的字符串格
+	    cout << "client: " << buffer << endl;
+	}
+	close(fd);
+}
+
 int main()
 {
 	/*+++++++++++++++++++++++++++++++++++++++++++++++
@@ -32,72 +59,63 @@ int main()
 	++++++++++++++++++++++++++++++++++++++++++++++++*/
     
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-
     if (server_fd == -1)
     {
     	cout << "socket 创建失败" << endl;
     	exit(-1);
     }
 
+
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(8080);
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-
     int res = bind(server_fd,(struct sockaddr*)&addr,sizeof(addr));
-
     if (res == -1)
     {
     	cout << "bind 失败" << endl;
     	exit(-1);
     }
 
-    cout << "等待客户端的连接" << endl;
 
     listen(server_fd,30);
+    cout << "等待客户端的连接" << endl;
 
+
+    pthread_t tids[NUM_THREADS];
     
+
     while (1)
     {
-
-    	struct sockaddr_in client;
-    	socklen_t len = sizeof(client);
-    
-    	int fd = accept(server_fd, (struct sockaddr*)&client, &len);
-	    if (fd == -1)
+		struct sockaddr_in client;
+		socklen_t len = sizeof(client);
+		int conn_fd = accept(server_fd, (struct sockaddr*)&client, &len);
+	    if (conn_fd == -1)
 	    {
 	    	cout << "accept 错误\n" <<endl;
-	    	continue;
+	    	exit(-1);
 	    }
 
-	    while (1)
+	    
+	    int ret = pthread_create(&tids[0],NULL,recv,(void *)&conn_fd);
+	    if (ret != 0)
 	    {
-			
+	    	cout << "接收线程创建失败" << endl;
+	    }
+	   
+	    while(1)
+	    {
 	    	char buffer[BUF_SIZE] = {};
-
-			int ret = recv(fd,buffer,BUF_SIZE-1,0);
+			cin >> buffer;
+			int ret = send(conn_fd,buffer,BUF_SIZE,0);
 			if (ret == -1)
 			{
-				cout << "recv 错误" << endl;
-				continue;
+				break;
 			}
-
-
-			char *ip = inet_ntoa(client.sin_addr);//将网络地址转换成“.”点隔的字符串格
-		    cout << "client: " << buffer << endl;
-
-		    memset(buffer,0x00,BUF_SIZE);
-		    cin >> buffer;
-		    send(fd,buffer,BUF_SIZE,0);
-
 	    }
-	    
-		close(fd);	
-    }
-	
-	close(server_fd);
-    	
-    return 0;
+	}
 
+	close(server_fd);
+    pthread_exit(NULL);	
+    return 0;
 }
