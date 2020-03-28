@@ -8,7 +8,7 @@
 * 使用说明 
 > g++ -o server server.cpp -lpthread   
 > ./server  
-> g++ -o client client.cpp -lpthread
+> g++ -o client client.cpp -lpthread  
 > ./client  
 
 
