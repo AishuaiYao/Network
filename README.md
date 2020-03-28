@@ -6,7 +6,7 @@
 ## 实验项目 
 ### TCP的CS模型 
 * 使用说明 
-> g++ -o server server.cpp -lpthread 
+> g++ -o server server.cpp -lpthread   
 > g++ -o client client.cpp -lpthread
 
 
