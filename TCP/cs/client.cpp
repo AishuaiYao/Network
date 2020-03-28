@@ -49,6 +49,7 @@ int main()
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(8080);
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	
 
 
 	int res = connect(client_fd,(struct sockaddr*)&addr,sizeof(addr));
