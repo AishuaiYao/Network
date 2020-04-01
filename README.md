@@ -10,5 +10,7 @@
 > ./server  
 > g++ -o client client.cpp -lpthread  
 > ./client  
+* 使用makefile  
+> make
 
 
